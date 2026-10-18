@@ -56,14 +56,14 @@ This plan tracks the end-to-end implementation of **BrightPath CRM**, an intelli
 
 ---
 
-### [ ] Phase 3: SQL Migrations, Database Schema & RLS Policies
-- [ ] Create `supabase/migrations/20261018000000_initial_schema.sql`.
-- [ ] DDL for `profiles`, `leads`, `follow_ups`, `activities`.
-- [ ] Add check constraints, foreign keys, cascade rules, and performance indexes.
-- [ ] Enable RLS on all tables with granular policies for Counsellor vs Manager/Admin.
-- [ ] Add `handle_new_user()` trigger to automatically create a default `counsellor` profile on Supabase auth signup.
-- [ ] Provide SQL instructions for owner execution in Supabase SQL Editor.
-- *Status*: **Pending**
+### [x] Phase 3: SQL Migrations, Database Schema & RLS Policies
+- [x] Create `supabase/migrations/20261018000000_initial_schema.sql`.
+- [x] DDL for `profiles`, `leads`, `follow_ups`, `activities`.
+- [x] Add check constraints, foreign keys, cascade rules, and performance indexes.
+- [x] Enable RLS on all tables with granular policies for Counsellor vs Manager/Admin.
+- [x] Add `handle_new_user()` trigger to automatically create a default `counsellor` profile on Supabase auth signup.
+- [x] Provide `supabase/seed.sql` and comprehensive setup instructions in `supabase/README.md`.
+- *Status*: **Completed** (Verified: Migration file generated and documented)
 
 ---
 
