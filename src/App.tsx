@@ -8,6 +8,7 @@ import LeadDetailModal from './features/leads/LeadDetailModal';
 import FollowUpsView from './features/followups/FollowUpsView';
 import NewFollowUpModal from './features/followups/NewFollowUpModal';
 import ReportsView from './features/reports/ReportsView';
+import SupabaseStatusBanner from './components/SupabaseStatusBanner';
 import { 
   INITIAL_LEADS, 
   INITIAL_FOLLOW_UPS, 
@@ -169,6 +170,7 @@ export default function App() {
       />
 
       <div className="main-wrapper">
+        <SupabaseStatusBanner />
         <Header 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

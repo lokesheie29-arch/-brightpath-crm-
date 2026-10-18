@@ -45,14 +45,14 @@ This plan tracks the end-to-end implementation of **BrightPath CRM**, an intelli
 
 ---
 
-### [ ] Phase 2: Supabase Client & Environment Configuration
-- [ ] Install `@supabase/supabase-js`.
-- [ ] Create `.env.example` with non-secret placeholders (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
-- [ ] Ensure `.env` is ignored by Git in `.gitignore`.
-- [ ] Implement `src/lib/supabaseClient.ts` with strict environment variable validation.
-- [ ] Implement user-friendly configuration warning banner if environment variables are not yet provided, allowing seamless mock exploration while waiting for Supabase credentials.
-- [ ] Verify app handles missing and present config safely.
-- *Status*: **Pending**
+### [x] Phase 2: Supabase Client & Environment Configuration
+- [x] Install `@supabase/supabase-js`.
+- [x] Create `.env.example` with non-secret placeholders (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+- [x] Ensure `.env` is ignored by Git in `.gitignore`.
+- [x] Implement `src/lib/supabaseClient.ts` with strict environment variable validation.
+- [x] Implement user-friendly configuration banner (`SupabaseStatusBanner.tsx`) displaying connection status and 3-step setup guide.
+- [x] Verify app handles missing and present config safely.
+- *Status*: **Completed** (Verified: build passed and banner rendered)
 
 ---
 
