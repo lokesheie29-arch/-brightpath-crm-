@@ -11,6 +11,8 @@ import ReportsView from './features/reports/ReportsView';
 import SupabaseStatusBanner from './components/SupabaseStatusBanner';
 import AuthModal from './features/auth/AuthModal';
 import { useAuth } from './features/auth/AuthContext';
+import { leadsService } from './services/leadsService';
+import { activitiesService } from './services/activitiesService';
 import { 
   INITIAL_LEADS, 
   INITIAL_FOLLOW_UPS, 
@@ -19,15 +21,17 @@ import {
 } from './mockData';
 import { Lead, LeadStatus, FollowUp, Activity, Profile } from './types/crm';
 import { CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function App() {
   const { profile: authProfile, switchDemoProfile } = useAuth();
   const [profiles] = useState<Profile[]>(INITIAL_PROFILES);
   const currentUser = authProfile || INITIAL_PROFILES[0];
 
-  const [leads, setLeals] = useState<Lead[]>(INITIAL_LEADS);
+  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
   const [followUps, setFollowUps] = useState<FollowUp[]>(INITIAL_FOLLOW_UPS);
   const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
+  const [isLoadingLeads, setIsLoadingLeads] = useState<boolean>(true);
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -46,9 +50,31 @@ export default function App() {
     }, 3500);
   };
 
-  // Status Update
-  const handleUpdateStatus = (leadId: string, newStatus: LeadStatus) => {
-    setLeals(prev => prev.map(l => {
+  // Load persisted leads & activities
+  useEffect(() => {
+    async function loadData() {
+      setIsLoadingLeads(true);
+      const [leadsRes, actsRes] = await Promise.all([
+        leadsService.fetchLeads(),
+        activitiesService.fetchActivities()
+      ]);
+      if (leadsRes.data) {
+        setLeads(leadsRes.data);
+      }
+      if (actsRes) {
+        setActivities(actsRes);
+      }
+      setIsLoadingLeads(false);
+    }
+    loadData();
+  }, []);
+
+  // Status Update with persistence
+  const handleUpdateStatus = async (leadId: string, newStatus: LeadStatus) => {
+    const lead = leads.find(l => l.id === leadId);
+
+    // Optimistic UI update
+    setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
         return { ...l, status: newStatus, updated_at: new Date().toISOString() };
       }
@@ -59,40 +85,47 @@ export default function App() {
       setSelectedLead(prev => prev ? { ...prev, status: newStatus } : null);
     }
 
-    const lead = leads.find(l => l.id === leadId);
     if (lead) {
       showToast(`Updated ${lead.full_name}'s status to ${newStatus}`);
+      
+      // Persist status change
+      await leadsService.updateLeadStatus(leadId, newStatus);
+
       // Record Activity
-      const newActivity: Activity = {
-        id: `act-${Date.now()}`,
-        lead_id: leadId,
-        actor_id: currentUser.id,
-        activity_type: 'status_changed',
-        description: `Status changed to ${newStatus}`,
-        metadata: { status: newStatus },
-        created_at: new Date().toISOString(),
-        actor_name: currentUser.full_name
-      };
-      setActivities(prev => [newActivity, ...prev]);
+      const newAct = await activitiesService.recordActivity(
+        leadId,
+        currentUser.id,
+        currentUser.full_name,
+        'status_changed',
+        `Status changed to ${newStatus}`,
+        { previousStatus: lead.status, newStatus }
+      );
+      setActivities(prev => [newAct, ...prev]);
     }
   };
 
-  // Save New Lead
-  const handleSaveLead = (newLead: Lead) => {
-    setLeals(prev => [newLead, ...prev]);
-    
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      lead_id: newLead.id,
-      actor_id: currentUser.id,
-      activity_type: 'lead_created',
-      description: `New enquiry registered for ${newLead.course_interest}`,
-      created_at: new Date().toISOString(),
-      actor_name: currentUser.full_name
-    };
-    setActivities(prev => [newActivity, ...prev]);
+  // Save New Lead with persistence
+  const handleSaveLead = async (newLead: Lead) => {
+    // Optimistic UI update
+    setLeads(prev => [newLead, ...prev]);
 
-    showToast(`Registered student enquiry: ${newLead.full_name}`);
+    // Persist to database / localStorage
+    const res = await leadsService.createLead(newLead);
+    if (res.error) {
+      showToast(`Error saving: ${res.error}`);
+    } else {
+      showToast(`Registered student enquiry: ${newLead.full_name}`);
+    }
+    
+    const newAct = await activitiesService.recordActivity(
+      newLead.id,
+      currentUser.id,
+      currentUser.full_name,
+      'lead_created',
+      `New enquiry registered for ${newLead.course_interest}`,
+      { source: newLead.source }
+    );
+    setActivities(prev => [newAct, ...prev]);
   };
 
   // Toggle FollowUp Completed/Pending
@@ -111,53 +144,51 @@ export default function App() {
   };
 
   // Save FollowUp
-  const handleSaveFollowUp = (newFollowUp: FollowUp) => {
+  const handleSaveFollowUp = async (newFollowUp: FollowUp) => {
     setFollowUps(prev => [newFollowUp, ...prev]);
 
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      lead_id: newFollowUp.lead_id,
-      actor_id: currentUser.id,
-      activity_type: 'follow_up_scheduled',
-      description: `Follow-up scheduled: "${newFollowUp.note}"`,
-      created_at: new Date().toISOString(),
-      actor_name: currentUser.full_name
-    };
-    setActivities(prev => [newActivity, ...prev]);
+    const newAct = await activitiesService.recordActivity(
+      newFollowUp.lead_id,
+      currentUser.id,
+      currentUser.full_name,
+      'follow_up_scheduled',
+      `Follow-up scheduled: "${newFollowUp.note}"`,
+      { due_at: newFollowUp.due_at }
+    );
+    setActivities(prev => [newAct, ...prev]);
 
     showToast('Follow-up scheduled successfully!');
   };
 
-  // Add Note to Lead
-  const handleAddNote = (leadId: string, note: string) => {
-    const timestamp = new Date().toLocaleDateString();
-    setLeals(prev => prev.map(l => {
-      if (l.id === leadId) {
-        const updated = l.notes ? `${l.notes}\n• [${timestamp} - ${currentUser.full_name}]: ${note}` : `• [${timestamp} - ${currentUser.full_name}]: ${note}`;
-        return { ...l, notes: updated, updated_at: new Date().toISOString() };
-      }
-      return l;
-    }));
+  // Add Note to Lead with persistence
+  const handleAddNote = async (leadId: string, note: string) => {
+    const res = await leadsService.appendLeadNote(leadId, note, currentUser.full_name);
+    
+    if (res.updatedNotes) {
+      setLeads(prev => prev.map(l => {
+        if (l.id === leadId) {
+          return { ...l, notes: res.updatedNotes, updated_at: new Date().toISOString() };
+        }
+        return l;
+      }));
 
-    if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead(prev => prev ? {
-        ...prev,
-        notes: prev.notes ? `${prev.notes}\n• [${timestamp} - ${currentUser.full_name}]: ${note}` : `• [${timestamp} - ${currentUser.full_name}]: ${note}`
-      } : null);
+      if (selectedLead && selectedLead.id === leadId) {
+        setSelectedLead(prev => prev ? {
+          ...prev,
+          notes: res.updatedNotes
+        } : null);
+      }
     }
 
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      lead_id: leadId,
-      actor_id: currentUser.id,
-      activity_type: 'note_added',
-      description: `Note added: "${note.slice(0, 40)}..."`,
-      created_at: new Date().toISOString(),
-      actor_name: currentUser.full_name
-    };
-    setActivities(prev => [newActivity, ...prev]);
+    const newAct = await activitiesService.recordActivity(
+      leadId,
+      currentUser.id,
+      currentUser.full_name,
+      'note_added',
+      `Note added: "${note.slice(0, 40)}..."`
+    );
+    setActivities(prev => [newAct, ...prev]);
 
-    showToast('Counselling note logged');
   };
 
   const overdueCount = followUps.filter(f => f.status === 'pending' && new Date(f.due_at) < new Date()).length;

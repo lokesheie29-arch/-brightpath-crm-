@@ -77,13 +77,13 @@ This plan tracks the end-to-end implementation of **BrightPath CRM**, an intelli
 
 ---
 
-### [ ] Phase 5: Student Lead Management (Real Persistence)
-- [ ] Build typed `src/services/leadsService.ts`.
-- [ ] Lead List with search, filtering by status/source/counsellor, and sorting.
-- [ ] Create Lead modal with validation (name, phone, course interest, source, notes).
-- [ ] Lead Detail drawer showing full history, contact info, and status progression.
-- [ ] Verify lead creation and editing persist across page refreshes.
-- *Status*: **Pending**
+### [x] Phase 5: Student Lead Management (Real Persistence)
+- [x] Build typed `src/services/leadsService.ts` with Supabase table query & localStorage fallback.
+- [x] Lead List with search, filtering by status/source/counsellor, and sorting.
+- [x] Create Lead modal with validation (name, phone, course interest, source, notes).
+- [x] Lead Detail drawer showing full history, contact info, status progression, and notes append.
+- [x] Verify lead creation, status changes, and note editing persist across page refreshes.
+- *Status*: **Completed** (Verified: build passed and leadsService connected)
 
 ---
 
