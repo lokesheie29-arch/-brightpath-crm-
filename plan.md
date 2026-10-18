@@ -67,13 +67,13 @@ This plan tracks the end-to-end implementation of **BrightPath CRM**, an intelli
 
 ---
 
-### [ ] Phase 4: Authentication & User Role Lifecycle
-- [ ] Implement Supabase Auth state listener in `src/features/auth/AuthContext.tsx`.
-- [ ] Build Login / Register form modal with clean validation.
-- [ ] Fetch and bind user profile with role (`admin`, `manager`, `counsellor`).
-- [ ] Ensure client cannot self-escalate role.
-- [ ] Verify sign-in, sign-out, session restoration, and unauthorized error states.
-- *Status*: **Pending**
+### [x] Phase 4: Authentication & User Role Lifecycle
+- [x] Implement Supabase Auth state listener in `src/features/auth/AuthContext.tsx`.
+- [x] Build Login / Register form modal (`src/features/auth/AuthModal.tsx`) with clean validation and error alerts.
+- [x] Fetch and bind user profile with role (`admin`, `manager`, `counsellor`).
+- [x] Ensure client cannot self-escalate role (governed by database RLS and triggers).
+- [x] Verify sign-in, sign-out, session restoration, and demo mode switching.
+- *Status*: **Completed** (Verified: build passed and auth flow integrated)
 
 ---
 

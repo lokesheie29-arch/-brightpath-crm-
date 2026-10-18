@@ -9,6 +9,8 @@ import FollowUpsView from './features/followups/FollowUpsView';
 import NewFollowUpModal from './features/followups/NewFollowUpModal';
 import ReportsView from './features/reports/ReportsView';
 import SupabaseStatusBanner from './components/SupabaseStatusBanner';
+import AuthModal from './features/auth/AuthModal';
+import { useAuth } from './features/auth/AuthContext';
 import { 
   INITIAL_LEADS, 
   INITIAL_FOLLOW_UPS, 
@@ -19,8 +21,10 @@ import { Lead, LeadStatus, FollowUp, Activity, Profile } from './types/crm';
 import { CheckCircle2 } from 'lucide-react';
 
 export default function App() {
+  const { profile: authProfile, switchDemoProfile } = useAuth();
   const [profiles] = useState<Profile[]>(INITIAL_PROFILES);
-  const [currentUser, setCurrentUser] = useState<Profile>(INITIAL_PROFILES[0]);
+  const currentUser = authProfile || INITIAL_PROFILES[0];
+
   const [leads, setLeals] = useState<Lead[]>(INITIAL_LEADS);
   const [followUps, setFollowUps] = useState<FollowUp[]>(INITIAL_FOLLOW_UPS);
   const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
@@ -30,6 +34,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState<boolean>(false);
   const [isNewFollowUpOpen, setIsNewFollowUpOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [scheduleForLeadId, setScheduleForLeadId] = useState<string | undefined>(undefined);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -177,8 +182,9 @@ export default function App() {
           onOpenNewLead={() => setIsNewLeadOpen(true)}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           currentUser={currentUser}
-          onSwitchUser={setCurrentUser}
+          onSwitchUser={switchDemoProfile}
           profiles={profiles}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
         />
 
         {activeTab === 'dashboard' && (
@@ -225,6 +231,11 @@ export default function App() {
       </div>
 
       {/* Modals */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
       <NewLeadModal 
         isOpen={isNewLeadOpen}
         onClose={() => setIsNewLeadOpen(false)}

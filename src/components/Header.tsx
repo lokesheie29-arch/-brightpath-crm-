@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Bell, UserPlus, Menu, Shield } from 'lucide-react';
+import { Search, UserPlus, Menu, Shield, LogIn, LogOut, User } from 'lucide-react';
 import { Profile } from '../types/crm';
+import { useAuth } from '../features/auth/AuthContext';
 
 interface HeaderProps {
   searchQuery: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
   currentUser: Profile;
   onSwitchUser: (profile: Profile) => void;
   profiles: Profile[];
+  onOpenAuthModal: () => void;
 }
 
 export default function Header({
@@ -19,9 +21,11 @@ export default function Header({
   onToggleSidebar,
   currentUser,
   onSwitchUser,
-  profiles
+  profiles,
+  onOpenAuthModal
 }: HeaderProps) {
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const { user, signOut, isCloudMode } = useAuth();
 
   return (
     <header className="top-header">
@@ -55,7 +59,7 @@ export default function Header({
           <button 
             className="user-profile-btn"
             onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-            title="Switch User Role (Demo Mode)"
+            title="Account & Role options"
           >
             <div className="contact-avatar" style={{ width: '36px', height: '36px', fontSize: '0.8rem' }}>
               {currentUser.full_name.split(' ').map(n => n[0]).join('')}
@@ -81,9 +85,15 @@ export default function Header({
               padding: '0.75rem',
               zIndex: 50
             }}>
-              <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
-                Workshop User Simulator
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>
+                  {isCloudMode ? 'Cloud Account' : 'Workshop Profiles'}
+                </span>
+                <span style={{ fontSize: '0.65rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px', textTransform: 'capitalize' }}>
+                  {currentUser.role}
+                </span>
               </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 {profiles.map(p => (
                   <button
@@ -113,6 +123,56 @@ export default function Header({
                     {p.id === currentUser.id && <span style={{ fontSize: '0.75rem' }}>✓</span>}
                   </button>
                 ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <button
+                  onClick={() => {
+                    setShowRoleDropdown(false);
+                    onOpenAuthModal();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.65rem',
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    textAlign: 'left',
+                    borderRadius: '6px'
+                  }}
+                >
+                  <LogIn size={14} />
+                  <span>{user ? 'Switch / Re-authenticate' : 'Sign In / Register'}</span>
+                </button>
+
+                {user && (
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setShowRoleDropdown(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 0.65rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#fb7185',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      textAlign: 'left',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
